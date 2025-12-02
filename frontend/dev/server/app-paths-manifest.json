@@ -1,0 +1,14 @@
+{
+  "/api/auth/login/route": "app/api/auth/login/route.js",
+  "/api/orders/route": "app/api/orders/route.js",
+  "/api/products/route": "app/api/products/route.js",
+  "/dashboard/inventory/page": "app/dashboard/inventory/page.js",
+  "/dashboard/kitchen/page": "app/dashboard/kitchen/page.js",
+  "/dashboard/new-order/page": "app/dashboard/new-order/page.js",
+  "/dashboard/orders-in-progress/page": "app/dashboard/orders-in-progress/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/payments/page": "app/dashboard/payments/page.js",
+  "/dashboard/settings/page": "app/dashboard/settings/page.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js"
+}

@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  role      String   @default("admin") // "admin" | "waiter"
+}
+
+
+model Order {
+  id    Int     @id @default(autoincrement())
+  orderNumber String @unique
+  tableNumber Int
+  status String @default("pending") // pending, in-progress, ready, completed, paid
+  items OrderItem[]
+  totalPrice Float @default(0)
+  paymentMethod String? // cash, card, digital
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id    Int     @id @default(autoincrement())
+  orderId Int
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productName String
+  category String
+  price Float
+  quantity Int @default(1)
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id    Int     @id @default(autoincrement())
+  name String
+  category String
+  price Float
+  stock Int @default(0)
+  status String @default("ok") // ok, bajo (low)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payment {
+  id    Int     @id @default(autoincrement())
+  orderId Int @unique
+  amount Float
+  method String // cash, card, digital
+  status String @default("pending") // pending, completed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
