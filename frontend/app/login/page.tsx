@@ -90,7 +90,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="bg-white rounded-lg p-8 shadow-lg">
             <h2 className="text-3xl font-bold text-center text-[#3d3330] mb-8">
-              {isRegistering ? "Registrar Administrador" : "Iniciar Sesión"}
+              {isRegistering ? "Registrar Usuario" : "Iniciar Sesión"}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -171,8 +171,8 @@ export default function LoginPage() {
                     ? "Registrando..."
                     : "Iniciando..."
                   : isRegistering
-                  ? "REGISTRAR"
-                  : "INICIAR SESIÓN"}
+                    ? "REGISTRAR"
+                    : "INICIAR SESIÓN"}
               </button>
             </form>
 
