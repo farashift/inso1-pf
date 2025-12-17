@@ -1,0 +1,43 @@
+Checking database...
+Total orders: 9
+Order #ORD-1765990835852 (ID: 9) - Status: pending
+  Table: 3, Created: Wed Dec 17 2025 12:00:35 GMT-0500 (hora estándar de Perú)
+  Items: 2
+    - Cafe Americano x1
+    - Cafe Expresso x1
+Order #ORD-1765983885480 (ID: 8) - Status: pending
+  Table: 4, Created: Wed Dec 17 2025 10:04:45 GMT-0500 (hora estándar de Perú)
+  Items: 2
+    - Cafe Americano x1
+    - Te de Manzanilla x1
+Order #ORD-1765983788400 (ID: 7) - Status: pending
+  Table: 1, Created: Wed Dec 17 2025 10:03:08 GMT-0500 (hora estándar de Perú)
+  Items: 2
+    - Cafe Americano x1
+    - Cafe Expresso x1
+Order #ORD-1765956589293 (ID: 6) - Status: pending
+  Table: 1, Created: Wed Dec 17 2025 02:29:49 GMT-0500 (hora estándar de Perú)
+  Items: 2
+    - Cafe Americano x1
+    - Cafe Expresso x1
+Order #ORD-1765956557354 (ID: 5) - Status: pending
+  Table: 2, Created: Wed Dec 17 2025 02:29:17 GMT-0500 (hora estándar de Perú)
+  Items: 2
+    - Cafe Americano x1
+    - Cafe Expresso x1
+Order #ORD-1764664026768 (ID: 4) - Status: paid
+  Table: 2, Created: Tue Dec 02 2025 03:27:06 GMT-0500 (hora estándar de Perú)
+  Items: 1
+    - Cafe Americano x1
+Order #ORD-1764659232745 (ID: 3) - Status: in-progress
+  Table: 2, Created: Tue Dec 02 2025 02:07:12 GMT-0500 (hora estándar de Perú)
+  Items: 1
+    - Cafe Americano x1
+Order #ORD-1764658149993 (ID: 2) - Status: paid
+  Table: 2, Created: Tue Dec 02 2025 01:49:10 GMT-0500 (hora estándar de Perú)
+  Items: 1
+    - Cafe Expresso x10
+Order #ORD-1764657640658 (ID: 1) - Status: in-progress
+  Table: 2, Created: Tue Dec 02 2025 01:40:40 GMT-0500 (hora estándar de Perú)
+  Items: 1
+    - Cafe Americano x1

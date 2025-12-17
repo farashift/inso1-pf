@@ -67,15 +67,16 @@ export default function OrdersInProgressPage() {
         return;
       }
       const data: Order[] = await response.json();
-      // Filtrar activos
+      console.log("OrdersInProgressPage - Fetched ALL orders:", data);
+
       const activeOrders = data.filter(
-        (o) =>
-          o.status === "pending" ||
-          o.status === "in-progress" ||
-          o.status === "ready",
+        (o) => {
+          const s = (o.status || "").toLowerCase().trim();
+          return s === "pending" || s === "in-progress" || s === "ready";
+        }
       );
       setOrders(activeOrders);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching orders:", error);
     } finally {
       setIsLoading(false);
@@ -311,6 +312,7 @@ export default function OrdersInProgressPage() {
             </div>
           </div>
         )}
+
       </div>
     </ProtectedLayout>
   );

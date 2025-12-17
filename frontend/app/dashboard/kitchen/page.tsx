@@ -34,19 +34,22 @@ export default function KitchenPage() {
 
   const fetchOrders = async () => {
     try {
-      setIsLoading(true);
-      // Traemos todos y filtramos sólo pending + in-progress
       const response = await fetch(`${API_URL}/api/pedidos`);
       if (!response.ok) {
         console.error("Error al obtener pedidos");
         return;
       }
       const data: Order[] = await response.json();
+      console.log("Fetched orders:", data);
+
       const filtrados = data.filter(
-        (o) => o.status === "pending" || o.status === "in-progress",
+        (o) => {
+          const s = (o.status || "").toLowerCase().trim();
+          return s === "pending" || s === "in-progress";
+        }
       );
       setOrders(filtrados);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching orders:", error);
     } finally {
       setIsLoading(false);
@@ -104,8 +107,8 @@ export default function KitchenPage() {
                 <div
                   key={order.id}
                   className={`bg-white rounded-lg p-6 shadow border-l-4 ${isPending
-                      ? "border-green-500" // pedido nuevo bien resaltado
-                      : "border-blue-500"
+                    ? "border-green-500" // pedido nuevo bien resaltado
+                    : "border-blue-500"
                     }`}
                 >
                   <div className="flex justify-between items-start mb-3">
@@ -123,10 +126,10 @@ export default function KitchenPage() {
                     </div>
                     <span
                       className={`px-3 py-1 rounded text-xs font-bold text-white ${isPending
-                          ? "bg-green-600"
-                          : isInProgress
-                            ? "bg-blue-600"
-                            : "bg-gray-600"
+                        ? "bg-green-600"
+                        : isInProgress
+                          ? "bg-blue-600"
+                          : "bg-gray-600"
                         }`}
                     >
                       {order.status.toUpperCase()}
