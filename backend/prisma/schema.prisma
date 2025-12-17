@@ -25,7 +25,8 @@ model Order {
   status String @default("pending") // pending, in-progress, ready, completed, paid
   items OrderItem[]
   totalPrice Float @default(0)
-  paymentMethod String? // cash, card, digital
+  paymentMethod String? // cash, card, digital (ultimo metodo usado o principal)
+  waiterName String?    // nombre del mesero
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -54,7 +55,7 @@ model Product {
 
 model Payment {
   id    Int     @id @default(autoincrement())
-  orderId Int @unique
+  orderId Int       // Se quita @unique para permitir varios pagos (split)
   amount Float
   method String // cash, card, digital
   status String @default("pending") // pending, completed

@@ -10,7 +10,6 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "CAFETERÍA FONZI - Sistema Web",
   description: "Sistema de gestión para cafetería FONZI",
-  generator: "",
   icons: {
     icon: [
       {
@@ -26,7 +25,6 @@ export const metadata: Metadata = {
         type: "image/svg+xml",
       },
     ],
-    apple: "",
   },
 }
 

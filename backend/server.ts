@@ -1,4 +1,5 @@
 // server.ts
+import "dotenv/config";
 import express, { Request, Response } from "express";
 import cors from "cors";
 import { prisma } from "./lib/db"; // instancia de Prisma
@@ -131,29 +132,50 @@ app.post("/api/productos", async (req: Request, res: Response) => {
   }
 });
 
-// 🔹 Actualizar SOLO el stock de un producto
+// 🔹 Actualizar producto COMPLETO (name, category, price, stock)
 app.patch("/api/productos/:id", async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
-    const { stock } = req.body as { stock: number };
+    const { name, category, price, stock } = req.body as {
+      name?: string;
+      category?: string;
+      price?: number;
+      stock?: number;
+    };
 
     if (Number.isNaN(id)) {
       return res.status(400).json({ error: "ID inválido" });
     }
 
-    if (typeof stock !== "number" || stock < 0) {
-      return res.status(400).json({ error: "Stock inválido" });
-    }
+    const data: any = {};
+    if (name !== undefined) data.name = name.trim();
+    if (category !== undefined) data.category = category.trim();
+    if (price !== undefined) data.price = Number(price);
+    if (stock !== undefined) data.stock = Number(stock);
 
     const updated = await prisma.product.update({
       where: { id },
-      data: { stock },
+      data,
     });
 
     res.json(updated);
   } catch (err) {
-    console.error("Error al actualizar stock:", err);
-    res.status(500).json({ error: "Error interno al actualizar stock" });
+    console.error("Error al actualizar producto:", err);
+    res.status(500).json({ error: "Error interno al actualizar producto" });
+  }
+});
+
+// 🔹 Eliminar producto
+app.delete("/api/productos/:id", async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (Number.isNaN(id)) return res.status(400).json({ error: "ID inválido" });
+
+    await prisma.product.delete({ where: { id } });
+    res.json({ message: "Producto eliminado" });
+  } catch (err) {
+    console.error("Error al eliminar producto:", err);
+    res.status(500).json({ error: "Error interno al eliminar producto" });
   }
 });
 
@@ -174,11 +196,13 @@ app.post("/api/pedidos", async (req: Request, res: Response) => {
       tableNumber,
       items,
       paymentMethod,
+      waiterName, // Nuevo campo
       notes,
     } = req.body as {
       tableNumber: number;
       items: PedidoItemInput[];
       paymentMethod?: string;
+      waiterName?: string;
       notes?: string;
     };
 
@@ -230,6 +254,7 @@ app.post("/api/pedidos", async (req: Request, res: Response) => {
         status: "pending",
         totalPrice,
         paymentMethod: paymentMethod ?? null,
+        waiterName: waiterName ?? null,
         items: {
           create: orderItemsData,
         },
@@ -244,6 +269,64 @@ app.post("/api/pedidos", async (req: Request, res: Response) => {
   }
 });
 
+// 🔹 Agregar items a un pedido existente
+app.post("/api/pedidos/:id/items", async (req: Request, res: Response) => {
+  try {
+    const orderId = Number(req.params.id);
+    const { items } = req.body as { items: PedidoItemInput[] };
+
+    if (Number.isNaN(orderId) || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "Datos inválidos" });
+    }
+
+    // Verificar pedido
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) return res.status(404).json({ error: "Pedido no encontrado" });
+
+    // Traer productos
+    const productIds = items.map((i) => i.productId);
+    const productos = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+    });
+
+    let additionalPrice = 0;
+    const orderItemsData = items.map((item) => {
+      const producto = productos.find((p) => p.id === item.productId);
+      if (!producto) throw new Error(`Producto ${item.productId} no encontrado`);
+
+      const subtotal = producto.price * item.quantity;
+      additionalPrice += subtotal;
+
+      return {
+        orderId,
+        productName: producto.name,
+        category: producto.category,
+        price: producto.price,
+        quantity: item.quantity,
+      };
+    });
+
+    // Transaction: crear items y actualizar total del pedido
+    await prisma.$transaction([
+      prisma.orderItem.createMany({ data: orderItemsData }),
+      prisma.order.update({
+        where: { id: orderId },
+        data: {
+          totalPrice: { increment: additionalPrice },
+          // Si estaba 'ready' o 'paid', tal vez debería volver a 'in-progress'?
+          // Por simplicidad, lo pasamos a 'in-progress' si estaba 'ready'
+          status: order.status === "ready" ? "in-progress" : order.status,
+        },
+      }),
+    ]);
+
+    res.json({ message: "Items agregados correctamente", additionalPrice });
+  } catch (err) {
+    console.error("Error al agregar items:", err);
+    res.status(500).json({ error: "Error interno" });
+  }
+});
+
 // Listar pedidos (opcionalmente filtrados por status)
 app.get("/api/pedidos", async (req: Request, res: Response) => {
   try {
@@ -254,7 +337,10 @@ app.get("/api/pedidos", async (req: Request, res: Response) => {
     const pedidos = await prisma.order.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      include: { items: true },
+      include: {
+        items: true,
+        payments: true // incluir pagos para calcular restante
+      },
     });
 
     res.json(pedidos);
@@ -264,11 +350,33 @@ app.get("/api/pedidos", async (req: Request, res: Response) => {
   }
 });
 
+// Actualizar estado de un pedido
+app.patch("/api/pedidos/:id/estado", async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const { status } = req.body as { status: string };
+
+    if (Number.isNaN(id) || !status) {
+      return res.status(400).json({ error: "ID y status son obligatorios" });
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id },
+      data: { status },
+    });
+
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error("Error al actualizar estado:", error);
+    res.status(500).json({ error: "Error interno" });
+  }
+});
+
 //
-// 👉 PAGOS
+// 👉 PAGOS (Split Payment)
 //
 
-// Registrar un pago para un pedido
+// Registrar un pago (parcial o total)
 app.post("/api/pagos", async (req: Request, res: Response) => {
   try {
     const {
@@ -283,6 +391,7 @@ app.post("/api/pagos", async (req: Request, res: Response) => {
         .json({ error: "orderId, amount y method son obligatorios" });
     }
 
+    // Registrar el pago
     const pago = await prisma.payment.create({
       data: {
         orderId,
@@ -292,11 +401,25 @@ app.post("/api/pagos", async (req: Request, res: Response) => {
       },
     });
 
-    // Marcar el pedido como pagado
-    await prisma.order.update({
+    // Verificar si ya se cubrió el total
+    const order = await prisma.order.findUnique({
       where: { id: orderId },
-      data: { status: "paid" },
+      include: { items: true }, // por si acaso
     });
+
+    if (order) {
+      // Sumar todos los pagos de este pedido
+      const pagos = await prisma.payment.findMany({ where: { orderId } });
+      const totalPagado = pagos.reduce((acc, p) => acc + p.amount, 0);
+
+      // Margen de error pequeño por float
+      if (totalPagado >= order.totalPrice - 0.1) {
+        await prisma.order.update({
+          where: { id: orderId },
+          data: { status: "paid" },
+        });
+      }
+    }
 
     res.status(201).json(pago);
   } catch (error) {

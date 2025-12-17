@@ -21,7 +21,7 @@ interface OrderItem {
 }
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function NewOrderPage() {
   // catálogo de productos
@@ -35,11 +35,7 @@ export default function NewOrderPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // form de nuevo producto
-  const [productName, setProductName] = useState("");
-  const [productCategory, setProductCategory] = useState("");
-  const [productPrice, setProductPrice] = useState("");
-  const [productStock, setProductStock] = useState("");
+
 
   // cantidades temporales por producto (para el input de Cant.)
   const [productQuantities, setProductQuantities] = useState<
@@ -66,62 +62,7 @@ export default function NewOrderPage() {
     }
   };
 
-  // 🔹 Crear producto en BD (tabla Product)
-  const handleCreateProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage("");
 
-    if (!productName.trim() || !productPrice.trim() || !productStock.trim()) {
-      setMessage("Nombre, precio y stock son obligatorios para el producto.");
-      return;
-    }
-
-    const price = Number(productPrice);
-    const stock = Number(productStock);
-
-    if (Number.isNaN(price) || price <= 0) {
-      setMessage("Precio inválido.");
-      return;
-    }
-    if (Number.isNaN(stock) || stock < 0) {
-      setMessage("Stock inválido.");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_URL}/api/productos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: productName.trim(),
-          category: productCategory.trim() || "Sin categoría",
-          price,
-          stock,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Error al crear producto");
-      }
-
-      const nuevo: Product = await res.json();
-      // lo ponemos al inicio de la lista
-      setProducts((prev) => [nuevo, ...prev]);
-
-      // limpiamos formulario
-      setProductName("");
-      setProductCategory("");
-      setProductPrice("");
-      setProductStock("");
-
-      setMessage("Producto agregado correctamente ✅");
-      setTimeout(() => setMessage(""), 2500);
-    } catch (err) {
-      console.error(err);
-      setMessage("Error al guardar el producto.");
-    }
-  };
 
   // 🔹 Agregar producto a la orden
   const addProductToOrder = (product: Product) => {
@@ -211,11 +152,13 @@ export default function NewOrderPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tableNumber: mesa,
+          totalPrice,
           items: orderItems.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
           })),
           paymentMethod: "cash",
+          waiterName: localStorage.getItem("adminName") || "Mesero",
           notes: customerNotes,
         }),
       });
@@ -252,6 +195,8 @@ export default function NewOrderPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* IZQUIERDA: Agregar producto + listado de productos */}
           <div className="lg:col-span-2 space-y-6">
+
+
 
             {/* Listado de productos (con scroll y altura fija para ~10 filas) */}
             <div className="bg-white rounded-lg p-6 shadow">
@@ -433,11 +378,10 @@ export default function NewOrderPage() {
 
               {message && (
                 <div
-                  className={`p-3 rounded text-sm mb-4 ${
-                    message.includes("Error")
-                      ? "bg-red-100 text-red-700"
-                      : "bg-green-100 text-green-700"
-                  }`}
+                  className={`p-3 rounded text-sm mb-4 ${message.includes("Error")
+                    ? "bg-red-100 text-red-700"
+                    : "bg-green-100 text-green-700"
+                    }`}
                 >
                   {message}
                 </div>

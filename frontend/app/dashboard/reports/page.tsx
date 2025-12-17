@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { ProtectedLayout } from "@/components/protected-layout";
+import { X, Printer, Eye } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface OrderItem {
   id: number;
@@ -35,6 +36,7 @@ export default function ReportsPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [selectedReceipt, setSelectedReceipt] = useState<Order | null>(null);
 
   useEffect(() => {
     void fetchOrders();
@@ -56,8 +58,7 @@ export default function ReportsPage() {
   };
 
   // Helpers
-  const formatCurrency = (value: number) =>
-    `S/.${value.toFixed(2)}`;
+  const formatCurrency = (value: number) => `S/.${value.toFixed(2)}`;
 
   const formatDateTime = (iso: string) => {
     const d = new Date(iso);
@@ -122,11 +123,10 @@ export default function ReportsPage() {
 
         {message && (
           <div
-            className={`mb-4 rounded p-3 text-sm ${
-              message.includes("Error")
-                ? "bg-red-100 text-red-700"
-                : "bg-green-100 text-green-700"
-            }`}
+            className={`mb-4 rounded p-3 text-sm ${message.includes("Error")
+              ? "bg-red-100 text-red-700"
+              : "bg-green-100 text-green-700"
+              }`}
           >
             {message}
           </div>
@@ -227,6 +227,9 @@ export default function ReportsPage() {
                         <th className="px-3 py-2 text-right font-semibold text-[#3d3330]">
                           Total
                         </th>
+                        <th className="px-3 py-2 text-center font-semibold text-[#3d3330]">
+                          Acciones
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -246,19 +249,26 @@ export default function ReportsPage() {
                           </td>
                           <td className="px-3 py-2 text-center">
                             <span
-                              className={`rounded px-3 py-1 text-xs font-bold ${
-                                o.status === "paid"
-                                  ? "bg-green-100 text-green-700"
-                                  : o.status === "pending"
+                              className={`rounded px-3 py-1 text-xs font-bold ${o.status === "paid"
+                                ? "bg-green-100 text-green-700"
+                                : o.status === "pending"
                                   ? "bg-yellow-100 text-yellow-700"
                                   : "bg-red-100 text-red-700"
-                              }`}
+                                }`}
                             >
                               {o.status.toUpperCase()}
                             </span>
                           </td>
                           <td className="px-3 py-2 text-right text-[#3d3330]">
                             {formatCurrency(o.totalPrice ?? 0)}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <button
+                              onClick={() => setSelectedReceipt(o)}
+                              className="text-[#d97706] hover:text-[#b94f0f] font-medium text-xs flex items-center justify-center gap-1"
+                            >
+                              <Eye size={16} /> Ver Boleta
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -309,6 +319,77 @@ export default function ReportsPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de Comprobante (Lectura) */}
+      {selectedReceipt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="bg-[#3d3330] p-4 text-white flex justify-between items-center">
+              <h3 className="font-bold text-lg">Boleta de Pago</h3>
+              <button
+                onClick={() => setSelectedReceipt(null)}
+                className="hover:bg-white/20 p-1 rounded"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="text-center border-b pb-4 border-dashed border-gray-300">
+                <p className="font-bold text-xl uppercase tracking-wider mb-1">
+                  Cafetería Fonzi
+                </p>
+                <p className="text-sm text-gray-500">
+                  {new Date(selectedReceipt.createdAt).toLocaleString("es-PE")}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Recibo {selectedReceipt.orderNumber}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                {selectedReceipt.items?.map((item: any) => (
+                  <div key={item.id} className="flex justify-between text-sm">
+                    <span>
+                      {item.quantity} x {item.productName}
+                    </span>
+                    <span>
+                      S/.{(item.price * item.quantity).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t pt-4 mt-4 flex justify-between items-center font-bold text-lg">
+                <span>TOTAL</span>
+                <span>S/.{selectedReceipt.totalPrice?.toFixed(2)}</span>
+              </div>
+
+              <div className="text-sm text-gray-500 flex justify-between">
+                <span>Método:</span>
+                <span className="capitalize">
+                  {selectedReceipt.paymentMethod === "cash"
+                    ? "Efectivo"
+                    : selectedReceipt.paymentMethod === "card"
+                      ? "Tarjeta"
+                      : selectedReceipt.paymentMethod === "digital"
+                        ? "Billetera Digital"
+                        : selectedReceipt.paymentMethod}
+                </span>
+              </div>
+
+              <div className="pt-6 flex gap-3">
+                <button
+                  onClick={() => window.print()}
+                  className="w-full border border-[#3d3330] text-[#3d3330] py-2 rounded hover:bg-gray-50 flex items-center justify-center gap-2 font-medium"
+                >
+                  <Printer size={18} /> Imprimir
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </ProtectedLayout>
   );
 }

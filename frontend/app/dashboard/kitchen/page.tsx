@@ -54,6 +54,11 @@ export default function KitchenPage() {
   };
 
   const updateOrderStatus = async (orderId: number, newStatus: string) => {
+    // Optimistic update
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)),
+    );
+
     try {
       await fetch(`${API_URL}/api/pedidos/${orderId}/estado`, {
         method: "PATCH",
@@ -63,6 +68,8 @@ export default function KitchenPage() {
       void fetchOrders();
     } catch (error) {
       console.error("Error updating order:", error);
+      // Rollback if needed, but fetchOrders usually corrects it
+      void fetchOrders();
     }
   };
 
@@ -96,11 +103,10 @@ export default function KitchenPage() {
               return (
                 <div
                   key={order.id}
-                  className={`bg-white rounded-lg p-6 shadow border-l-4 ${
-                    isPending
+                  className={`bg-white rounded-lg p-6 shadow border-l-4 ${isPending
                       ? "border-green-500" // pedido nuevo bien resaltado
                       : "border-blue-500"
-                  }`}
+                    }`}
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div>
@@ -116,13 +122,12 @@ export default function KitchenPage() {
                       </p>
                     </div>
                     <span
-                      className={`px-3 py-1 rounded text-xs font-bold text-white ${
-                        isPending
+                      className={`px-3 py-1 rounded text-xs font-bold text-white ${isPending
                           ? "bg-green-600"
                           : isInProgress
-                          ? "bg-blue-600"
-                          : "bg-gray-600"
-                      }`}
+                            ? "bg-blue-600"
+                            : "bg-gray-600"
+                        }`}
                     >
                       {order.status.toUpperCase()}
                     </span>

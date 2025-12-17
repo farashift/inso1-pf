@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ProtectedLayout } from "@/components/protected-layout";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Edit, Trash2, X, Save } from "lucide-react";
 
 interface Product {
   id: number;
@@ -10,9 +10,10 @@ interface Product {
   category: string;
   price: number;
   stock: number;
+  status: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -105,6 +106,57 @@ export default function InventoryPage() {
     }
   };
 
+  // 🔹 Eliminar producto
+  const handleDeleteProduct = async (id: number) => {
+    if (!confirm("¿Estás seguro de eliminar este producto?")) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/productos/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Error al eliminar");
+
+      setMessage("Producto eliminado correctamente");
+      fetchProducts();
+      setTimeout(() => setMessage(""), 2500);
+    } catch (error) {
+      console.error(error);
+      setMessage("Error al eliminar producto");
+    }
+  };
+
+  // 🔹 Editar producto
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const handleUpdateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/productos/${editingProduct.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editingProduct.name,
+          category: editingProduct.category,
+          price: editingProduct.price,
+          stock: editingProduct.stock,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Error al actualizar");
+
+      setMessage("Producto actualizado correctamente");
+      setEditingProduct(null);
+      fetchProducts();
+      setTimeout(() => setMessage(""), 2500);
+    } catch (error) {
+      console.error(error);
+      setMessage("Error al actualizar producto");
+    }
+  };
+
+
   // 🔹 Status visual según stock (tu pill OK / BAJO)
   const getStatus = (stock: number) => {
     if (stock <= 0) return "sin_stock";
@@ -126,11 +178,10 @@ export default function InventoryPage() {
         {/* Mensajes */}
         {message && (
           <div
-            className={`mb-4 rounded p-3 text-sm ${
-              message.includes("Error")
-                ? "bg-red-100 text-red-700"
-                : "bg-green-100 text-green-700"
-            }`}
+            className={`mb-4 rounded p-3 text-sm ${message.includes("Error")
+              ? "bg-red-100 text-red-700"
+              : "bg-green-100 text-green-700"
+              }`}
           >
             {message}
           </div>
@@ -190,6 +241,9 @@ export default function InventoryPage() {
                         <th className="px-3 py-2 text-center font-semibold text-[#3d3330]">
                           Estado
                         </th>
+                        <th className="px-3 py-2 text-center font-semibold text-[#3d3330]">
+                          Acciones
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -209,26 +263,40 @@ export default function InventoryPage() {
                             <td className="px-3 py-2 text-right text-[#3d3330]">
                               S/.{p.price.toFixed(2)}
                             </td>
-                            {/* 👇 Stock solo lectura */}
                             <td className="px-3 py-2 text-center text-[#3d3330]">
                               {p.stock}
                             </td>
                             <td className="px-3 py-2 text-center">
                               <span
-                                className={`rounded px-3 py-1 text-xs font-bold ${
-                                  status === "ok"
-                                    ? "bg-green-100 text-green-700"
-                                    : status === "bajo"
+                                className={`rounded px-3 py-1 text-xs font-bold ${status === "ok"
+                                  ? "bg-green-100 text-green-700"
+                                  : status === "bajo"
                                     ? "bg-yellow-100 text-yellow-700"
                                     : "bg-red-100 text-red-700"
-                                }`}
+                                  }`}
                               >
                                 {status === "ok"
                                   ? "OK"
                                   : status === "bajo"
-                                  ? "BAJO"
-                                  : "SIN STOCK"}
+                                    ? "BAJO"
+                                    : "SIN STOCK"}
                               </span>
+                            </td>
+                            <td className="px-3 py-2 text-center flex justify-center gap-2">
+                              <button
+                                onClick={() => setEditingProduct(p)}
+                                className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                                title="Editar"
+                              >
+                                <Edit size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteProduct(p.id)}
+                                className="p-1 text-red-600 hover:bg-red-50 rounded"
+                                title="Eliminar"
+                              >
+                                <Trash2 size={18} />
+                              </button>
                             </td>
                           </tr>
                         );
@@ -318,6 +386,96 @@ export default function InventoryPage() {
             </div>
           </div>
         </div>
+
+        {/* Modal de Edición */}
+        {editingProduct && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md animate-in fade-in zoom-in duration-200">
+              <div className="bg-[#3d3330] p-4 text-white flex justify-between items-center rounded-t-lg">
+                <h3 className="font-bold text-lg">Editar Producto</h3>
+                <button
+                  onClick={() => setEditingProduct(null)}
+                  className="hover:bg-white/20 p-1 rounded"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <form onSubmit={handleUpdateProduct} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#3d3330] mb-1">Nombre</label>
+                  <input
+                    type="text"
+                    value={editingProduct.name}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, name: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-[#d4a574] rounded focus:outline-none focus:ring-2 focus:ring-[#d97706]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#3d3330] mb-1">Categoría</label>
+                  <input
+                    type="text"
+                    value={editingProduct.category}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, category: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-[#d4a574] rounded focus:outline-none focus:ring-2 focus:ring-[#d97706]"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#3d3330] mb-1">Precio</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={editingProduct.price}
+                      onChange={(e) =>
+                        setEditingProduct({
+                          ...editingProduct,
+                          price: parseFloat(e.target.value),
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-[#d4a574] rounded focus:outline-none focus:ring-2 focus:ring-[#d97706]"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#3d3330] mb-1">Stock</label>
+                    <input
+                      type="number"
+                      value={editingProduct.stock}
+                      onChange={(e) =>
+                        setEditingProduct({
+                          ...editingProduct,
+                          stock: parseInt(e.target.value),
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-[#d4a574] rounded focus:outline-none focus:ring-2 focus:ring-[#d97706]"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="pt-2 flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setEditingProduct(null)}
+                    className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-[#d97706] text-white rounded hover:bg-[#b94f0f] flex items-center gap-2"
+                  >
+                    <Save size={18} /> Guardar Cambios
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedLayout>
   );
