@@ -24,6 +24,7 @@ model Order {
   tableNumber Int
   status String @default("pending") // pending, in-progress, ready, completed, paid
   items OrderItem[]
+  payments Payment[]  // relación con pagos
   totalPrice Float @default(0)
   paymentMethod String? // cash, card, digital (ultimo metodo usado o principal)
   waiterName String?    // nombre del mesero
@@ -55,7 +56,8 @@ model Product {
 
 model Payment {
   id    Int     @id @default(autoincrement())
-  orderId Int       // Se quita @unique para permitir varios pagos (split)
+  orderId Int
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)  // relación con Order
   amount Float
   method String // cash, card, digital
   status String @default("pending") // pending, completed
