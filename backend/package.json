@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch server.ts",
     "build": "tsc",
+    "prestart": "prisma generate",
     "start": "tsx server.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
