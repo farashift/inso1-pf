@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { ProtectedLayout } from "@/components/protected-layout";
 import { X, Printer, Eye } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 interface OrderItem {
   id: number;
