@@ -118,7 +118,7 @@ export default function ReportsPage() {
     .slice(0, 10);
 
   return (
-    <ProtectedLayout>
+    <ProtectedLayout allowedRoles={["admin"]}>
       <div className="p-6 md:p-8">
         <h1 className="mb-6 text-3xl font-bold text-[#3d3330]">REPORTES</h1>
 

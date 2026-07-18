@@ -170,7 +170,7 @@ export default function InventoryPage() {
   );
 
   return (
-    <ProtectedLayout>
+    <ProtectedLayout allowedRoles={["admin", "warehouse"]}>
       <div className="p-6 md:p-8">
         <h1 className="mb-6 text-3xl font-bold text-[#3d3330]">
           INVENTARIO GENERAL

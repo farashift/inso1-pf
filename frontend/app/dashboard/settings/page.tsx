@@ -4,7 +4,7 @@ import { ProtectedLayout } from "@/components/protected-layout"
 
 export default function SettingsPage() {
   return (
-    <ProtectedLayout>
+    <ProtectedLayout allowedRoles={["admin"]}>
       <div className="p-6 md:p-8">
         <h1 className="text-3xl font-bold text-[#3d3330] mb-6">CONFIGURACIÓN</h1>
 

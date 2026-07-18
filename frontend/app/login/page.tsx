@@ -62,6 +62,7 @@ export default function LoginPage() {
         // Guardar token y nombre
         localStorage.setItem("authToken", data.token);
         localStorage.setItem("adminName", data.name);
+        localStorage.setItem("adminRole", data.role || "admin");
 
         // Redirigir al dashboard
         router.push("/dashboard");

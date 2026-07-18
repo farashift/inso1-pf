@@ -78,7 +78,7 @@ export default function KitchenPage() {
 
   if (isLoading) {
     return (
-      <ProtectedLayout>
+      <ProtectedLayout allowedRoles={["admin", "kitchen"]}>
         <div className="p-6 md:p-8 text-center text-[#8b6f47]">
           Cargando...
         </div>
@@ -87,7 +87,7 @@ export default function KitchenPage() {
   }
 
   return (
-    <ProtectedLayout>
+    <ProtectedLayout allowedRoles={["admin", "kitchen"]}>
       <div className="p-6 md:p-8">
         <h1 className="text-3xl font-bold text-[#3d3330] mb-6">
           PEDIDOS EN COCINA

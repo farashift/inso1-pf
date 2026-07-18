@@ -149,7 +149,7 @@ export default function PaymentsPage() {
 
   if (isLoading) {
     return (
-      <ProtectedLayout>
+      <ProtectedLayout allowedRoles={["admin", "cashier"]}>
         <div className="p-6 md:p-8 text-center text-[#8b6f47]">
           Cargando...
         </div>
@@ -162,7 +162,7 @@ export default function PaymentsPage() {
     : { paid: 0, remaining: 0 };
 
   return (
-    <ProtectedLayout>
+    <ProtectedLayout allowedRoles={["admin", "cashier"]}>
       <div className="p-6 md:p-8 relative">
         <h1 className="text-3xl font-bold text-[#3d3330] mb-6">
           MÓDULO DE PAGO Y CAJA

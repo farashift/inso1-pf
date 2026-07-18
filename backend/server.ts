@@ -3,9 +3,11 @@ import "dotenv/config";
 import express, { Request, Response } from "express";
 import cors from "cors";
 import { prisma } from "./lib/db"; // instancia de Prisma
+import { hashPassword, verifyPassword } from "./lib/auth";
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
+const VALID_ROLES = ["admin", "waiter", "kitchen", "cashier", "warehouse"];
 
 app.use(cors());
 app.use(express.json());
@@ -32,6 +34,7 @@ app.get("/me", async (_req: Request, res: Response) => {
       id: admin.id,
       name: admin.name,
       email: admin.email,
+      role: admin.role,
       createdAt: admin.createdAt,
     });
   } catch (error) {
@@ -52,6 +55,7 @@ app.get("/api/me", async (_req: Request, res: Response) => {
       id: admin.id,
       name: admin.name,
       email: admin.email,
+      role: admin.role,
       createdAt: admin.createdAt,
     });
   } catch (error) {
@@ -435,10 +439,11 @@ app.post("/api/pagos", async (req: Request, res: Response) => {
 // Registrar un admin nuevo
 app.post("/api/auth/register", async (req: Request, res: Response) => {
   try {
-    const { email, password, name } = req.body as {
+    const { email, password, name, role } = req.body as {
       email: string;
       password: string;
       name: string;
+      role?: string;
     };
 
     if (!email || !password || !name) {
@@ -456,12 +461,15 @@ app.post("/api/auth/register", async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Ese correo ya está registrado" });
     }
 
-    // OJO: aquí podrías usar bcrypt para encriptar, pero por simplicidad lo guardamos tal cual
+    const normalizedRole = role && VALID_ROLES.includes(role) ? role : "admin";
+    const hashedPassword = await hashPassword(password);
+
     const nuevo = await prisma.admin.create({
       data: {
         email,
-        password, // en producción: encriptar
+        password: hashedPassword,
         name,
+        role: normalizedRole,
       },
     });
 
@@ -469,6 +477,7 @@ app.post("/api/auth/register", async (req: Request, res: Response) => {
       id: nuevo.id,
       email: nuevo.email,
       name: nuevo.name,
+      role: nuevo.role,
       message: "Admin registrado correctamente",
     });
   } catch (error) {
@@ -499,8 +508,16 @@ app.post("/api/auth/login", async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Credenciales inválidas" });
     }
 
-    // Comparación simple (sin hash, para el proyecto de la U)
-    if (admin.password !== password) {
+    let passwordMatches = admin.password === password;
+    if (!passwordMatches) {
+      try {
+        passwordMatches = await verifyPassword(password, admin.password);
+      } catch {
+        passwordMatches = false;
+      }
+    }
+
+    if (!passwordMatches) {
       return res.status(401).json({ message: "Credenciales inválidas" });
     }
 
@@ -511,6 +528,7 @@ app.post("/api/auth/login", async (req: Request, res: Response) => {
       token,
       name: admin.name,
       email: admin.email,
+      role: admin.role,
     });
   } catch (error) {
     console.error("Error en /api/auth/login:", error);

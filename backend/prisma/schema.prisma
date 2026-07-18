@@ -14,7 +14,7 @@ model Admin {
   password  String
   name      String
   createdAt DateTime @default(now())
-  role      String   @default("admin") // "admin" | "waiter"
+  role      String   @default("admin") // admin | waiter | kitchen | cashier | warehouse
 }
 
 

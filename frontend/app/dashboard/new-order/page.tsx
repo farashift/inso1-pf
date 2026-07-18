@@ -186,7 +186,7 @@ export default function NewOrderPage() {
     !isLoading && orderItems.length > 0 && tableNumber.trim().length > 0;
 
   return (
-    <ProtectedLayout>
+    <ProtectedLayout allowedRoles={["admin", "waiter"]}>
       <div className="p-6 md:p-8">
         <h1 className="text-3xl font-bold text-[#3d3330] mb-6">
           REGISTRAR PEDIDO
